@@ -1,0 +1,11 @@
+:root{
+  --teal:#0ea5a6;
+  --teal-dark:#0b8182;
+}
+.bg-teal{ background:var(--teal); }
+.btn-teal{ background:var(--teal); color:#fff; border:none; }
+.btn-teal:hover{ background:var(--teal-dark); color:#fff; }
+.card-prayer .meta{ color:#6c757d; font-size:.9rem; }
+.sticky-action{ position:sticky; bottom:0; background:#fff; padding:0.5rem; border-top:1px solid #eee; }
+.count-badge{ font-weight:600; }
+.prayer-text{ white-space:pre-wrap; }
