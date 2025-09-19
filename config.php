@@ -1,6 +1,6 @@
 <?php
 // Rename this file to config.php and fill in your DB credentials.
-define('DB_HOST', 'lighthousefm.org');
+define('DB_HOST', 'localhost');
 define('DB_NAME', 'lighthousefm_prayerwall');
 define('DB_USER', 'lighthousefm_prayerwallu');
 define('DB_PASS', 'l2G^?0p;?A5ruODK');

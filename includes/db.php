@@ -1,4 +1,3 @@
-
 <?php
 if (!file_exists(__DIR__.'/../config.php')) {
     die('Missing config.php. Please copy config.sample.php to config.php and edit credentials.');
@@ -17,5 +16,12 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
 } catch (PDOException $e) {
-    die('DB connection failed: ' . $e->getMessage());
+    // Si es una petición AJAX, devolver JSON
+    if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+        header('Content-Type: application/json');
+        echo json_encode(['error'=>'Error de conexión a la base de datos: '.$e->getMessage()]);
+        exit;
+    } else {
+        die('DB connection failed: ' . $e->getMessage());
+    }
 }

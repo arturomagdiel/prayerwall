@@ -1,16 +1,17 @@
 <?php
-// Forzar debug y mostrar errores desde el inicio
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-echo "Debug: inicio index.php<br>";
-
 require_once __DIR__.'/../includes/db.php';
-echo "Debug: después de db.php<br>";
 require_once __DIR__.'/../includes/functions.php';
-echo "Debug: después de functions.php<br>";
 
-$view = $_GET['view'] ?? 'wall';
-echo "Debug: view = $view<br>";
+
+session_start();
+$view = $_GET['view'] ?? null;
+if (!$view) {
+  if (!empty($_SESSION['user']) && !empty($_SESSION['user']['is_admin'])) {
+    $view = 'admin';
+  } else {
+    $view = 'wall';
+  }
+}
 
 $map = [
   'wall' => __DIR__.'/pages/wall.php',
@@ -19,8 +20,8 @@ $map = [
   'account' => __DIR__.'/pages/account.php',
   'login' => __DIR__.'/pages/login.php',
   'logout' => __DIR__.'/pages/logout.php',
+  'register' => __DIR__.'/pages/register.php',
+  'admin' => __DIR__.'/pages/admin.php',
 ];
 if (!isset($map[$view])) { $view = 'wall'; }
-echo "Debug: require ".$map[$view]."<br>";
 require $map[$view];
-echo "Debug: fin index.php<br>";

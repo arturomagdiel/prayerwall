@@ -1,5 +1,4 @@
 <?php
-session_start();
 
 function base_url($path = '') {
     $base = APP_BASE_URL;
@@ -56,4 +55,15 @@ function check_csrf() {
     if (empty($_POST['csrf']) || $_POST['csrf'] !== ($_SESSION['csrf'] ?? '')) {
         die('Invalid CSRF token');
     }
+}
+
+// Returns relative time string (e.g. "2 hours ago")
+function time_ago($datetime) {
+    $time = strtotime($datetime);
+    $diff = time() - $time;
+    if ($diff < 60) return 'just now';
+    if ($diff < 3600) return floor($diff/60) . ' minute' . (floor($diff/60)==1?'':'s') . ' ago';
+    if ($diff < 86400) return floor($diff/3600) . ' hour' . (floor($diff/3600)==1?'':'s') . ' ago';
+    if ($diff < 2592000) return floor($diff/86400) . ' day' . (floor($diff/86400)==1?'':'s') . ' ago';
+    return floor($diff/2592000) . ' month' . (floor($diff/2592000)==1?'':'s') . ' ago';
 }

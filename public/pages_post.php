@@ -1,4 +1,6 @@
+
 <?php
+session_start();
 require_once __DIR__.'/../includes/db.php';
 require_once __DIR__.'/../includes/functions.php';
 
@@ -8,6 +10,50 @@ check_csrf();
 $do = $_POST['do'] ?? '';
 
 switch ($do) {
+
+    case 'register':
+        $email = strtolower(trim($_POST['email'] ?? ''));
+        $password = $_POST['password'] ?? '';
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { flash('error', 'Invalid email.'); header('Location: '.base_url('index.php?view=register')); exit; }
+        if (strlen($password) < 4) { flash('error', 'Password must be at least 4 characters.'); header('Location: '.base_url('index.php?view=register')); exit; }
+        // Check if user exists
+        $st = $pdo->prepare('SELECT * FROM users WHERE email=? LIMIT 1');
+        $st->execute([$email]);
+        if ($st->fetch()) {
+            flash('error', 'Email already registered.');
+            header('Location: '.base_url('index.php?view=register'));
+            exit;
+        }
+        $st = $pdo->prepare('INSERT INTO users (email, password_hash, created_at) VALUES (?,?,NOW())');
+        $st->execute([$email, password_hash($password, PASSWORD_BCRYPT)]);
+        $id = $pdo->lastInsertId();
+        $st = $pdo->prepare('SELECT * FROM users WHERE id=?');
+        $st->execute([$id]);
+        $user = $st->fetch();
+        $_SESSION['user'] = $user;
+        flash('success', 'Registration successful!');
+        if (!empty($user['is_admin'])) {
+            header('Location: ' . base_url('index.php?view=admin'));
+            exit;
+        }
+        header('Location: '.base_url('index.php'));
+        exit;
+
+    case 'mark_answered':
+        require_login();
+        $rid = (int)($_POST['request_id'] ?? 0);
+        if ($rid <= 0) { header('Location: '.base_url('index.php')); exit; }
+        $u = current_user();
+        // Only allow if the user owns the request
+        $st = $pdo->prepare('SELECT user_id FROM prayer_requests WHERE id=?');
+        $st->execute([$rid]);
+        $owner = $st->fetchColumn();
+        if ($owner && $owner == $u['id']) {
+            $pdo->prepare('UPDATE prayer_requests SET is_answered=1 WHERE id=?')->execute([$rid]);
+            flash('success', 'Marked as answered.');
+        }
+        header('Location: '.base_url('index.php?view=detail&id='.$rid));
+        exit;
     case 'login':
         $email = strtolower(trim($_POST['email'] ?? ''));
         $password = $_POST['password'] ?? '';
@@ -20,6 +66,11 @@ switch ($do) {
             if (!password_verify($password, $user['password_hash'])) {
                 flash('error', 'Wrong password.'); header('Location: '.base_url('index.php?view=login')); exit;
             }
+            if (!empty($user['banned'])) {
+                flash('error', 'Your account has been banned. Please contact an administrator for assistance.');
+                header('Location: '.base_url('index.php?view=login'));
+                exit;
+            }
         } else {
             // Create on first login
             $st = $pdo->prepare('INSERT INTO users (email, password_hash, created_at) VALUES (?,?,NOW())');
@@ -30,7 +81,27 @@ switch ($do) {
         }
         $_SESSION['user'] = $user;
         flash('success', 'Welcome back!');
-        header('Location: '.base_url('index.php'));
+        $return = $_POST['return'] ?? '';
+        if (!empty($user['is_admin'])) {
+            header('Location: ' . base_url('index.php?view=admin'));
+            exit;
+        }
+        if ($return) {
+            // Si el return ya es absoluto (empieza con http), redirige directo
+            if (preg_match('/^https?:\/\//i', $return)) {
+                header('Location: ' . $return);
+            } else {
+                // Si el return ya empieza con el path base, no anteponer base_url
+                $basePath = parse_url(APP_BASE_URL, PHP_URL_PATH);
+                if ($basePath && strpos($return, $basePath) === 0) {
+                    header('Location: ' . $return);
+                } else {
+                    header('Location: ' . base_url(ltrim($return, '/')));
+                }
+            }
+        } else {
+            header('Location: '.base_url('index.php'));
+        }
         exit;
 
     case 'save_account':

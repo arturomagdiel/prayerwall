@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS prayer_requests (
   user_id INT NOT NULL,
   content TEXT NOT NULL,
   is_anonymous TINYINT(1) DEFAULT 0,
+  is_hidden TINYINT(1) DEFAULT 0,
   is_approved TINYINT(1) DEFAULT 0,
   is_answered TINYINT(1) DEFAULT 0,
   like_count INT NOT NULL DEFAULT 0,
